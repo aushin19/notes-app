@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import PasswordInput from '../components/PasswordInput'
 import { isValidEmail } from '../utils/helper'
+import axiosInstance from '../utils/axiosInstance'
 
 const Login = () => {
   const [email, setEmail] = useState('')
   const [pass, setPass] = useState('')
   const [error, setError] = useState(null)
+
+  const navigate = useNavigate()
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,6 +25,27 @@ const Login = () => {
     }
 
     setError(null)
+
+    try{
+      const response = await axiosInstance.post("/login", {
+        email: email,
+        password: pass
+      })
+
+      if(response.data && response.data.accessToken){
+        setError(null)
+        localStorage.setItem("token", response.data.accessToken)
+        navigate('/dashboard')
+      }
+
+      if(response.data.error)
+        setError(response.data.message)
+    }catch(error){
+      if(error.response && error.response.data && error.response.data.message)
+        setError(error.response.data.message)
+      else
+        setError("An unexpected error occured. Please try again!")
+    }
   }
   return (
     <>
